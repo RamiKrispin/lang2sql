@@ -1,0 +1,36 @@
+{
+    "name": "lang2sql",
+    "build": {
+        "dockerfile": "Dockerfile",
+        "args": {"ENV_NAME": "lang2sql",
+                  "PYTHON_VER": "3.10"}, 
+        "context": "."
+    },
+
+
+    
+    "customizations": {
+        "settings": {
+            "python.defaultInterpreterPath": "/opt/conda/envs/lang2sql/bin/python",
+            "python.selectInterpreter": "/opt/conda/envs/lang2sql/bin/python"
+        },
+        "vscode": {
+            "extensions": [
+                "quarto.quarto",
+                "ms-azuretools.vscode-docker",
+                "ms-python.python",
+                "ms-vscode-remote.remote-containers",
+                "yzhang.markdown-all-in-one",
+                "redhat.vscode-yaml",
+                "ms-toolsai.jupyter"
+            ]
+        }
+    },
+    "remoteEnv": {
+        "OPENAI_KEY": "${localEnv:OPENAI_KEY}"
+    }
+}
+
+// Reference
+// https://containers.dev/guide/dockerfile
+// https://code.visualstudio.com/docs/devcontainers/containers
