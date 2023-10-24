@@ -4,7 +4,7 @@
         "dockerfile": "Dockerfile.dev",
         "args": {"ENV_NAME": "lang2sql",
                   "PYTHON_VER": "3.10",
-                 "METHOD": "openai"}, 
+                 "METHOD": "transformers"}, 
         "context": "."
     },
 
