@@ -1,0 +1,9 @@
+pandas==2.0.0
+duckdb
+numpy
+matplotlib
+scikit-learn
+gensim
+ipykernel
+pytorch==2.1
+transformers ==4.34.0
