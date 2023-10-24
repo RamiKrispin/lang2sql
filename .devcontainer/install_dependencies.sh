@@ -2,6 +2,8 @@
 
 ENV_NAME=$1
 PYTHON_VER=$2
+REQUIREMENTS=$3
+
 CPU=$(uname -m)
 
 
@@ -34,4 +36,8 @@ echo "conda activate $ENV_NAME" >> ~/.bashrc
 conda activate $ENV_NAME
 
 # # Install the Python packages
-pip3 install -r /settings/requirements.txt
+if [[ $REQUIREMENTS == "openai" ]] ; then
+pip3 install -r /settings/requirements_openai.txt
+elif [[ $REQUIREMENTS == "transformers" ]] ; then
+pip3 install -r /settings/requirements_transformers.txt
+fi
