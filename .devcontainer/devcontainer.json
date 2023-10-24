@@ -1,9 +1,10 @@
 {
     "name": "lang2sql",
     "build": {
-        "dockerfile": "Dockerfile",
+        "dockerfile": "Dockerfile.dev",
         "args": {"ENV_NAME": "lang2sql",
-                  "PYTHON_VER": "3.10"}, 
+                  "PYTHON_VER": "3.10",
+                 "METHOD": "openai"}, 
         "context": "."
     },
 
