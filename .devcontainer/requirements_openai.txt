@@ -1,8 +1,1 @@
-pandas==2.0.0
-duckdb
-numpy
-matplotlib
-scikit-learn
-gensim
-ipykernel
 openai==0.28.1

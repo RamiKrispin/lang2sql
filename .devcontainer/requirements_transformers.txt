@@ -1,11 +1,7 @@
-pandas==2.0.0
-duckdb
-matplotlib
-scikit-learn
-gensim
-ipykernel
 torch 
 torchvision
 transformers
 IProgress
 ipywidgets
+accelerate
+bitsandbytes

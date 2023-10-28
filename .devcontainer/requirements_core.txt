@@ -1,0 +1,7 @@
+pandas==2.0.0
+duckdb
+numpy
+matplotlib
+scikit-learn
+gensim
+ipykernel

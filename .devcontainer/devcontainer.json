@@ -3,7 +3,7 @@
     "build": {
         "dockerfile": "Dockerfile.dev",
         "args": {"ENV_NAME": "lang2sql",
-                  "PYTHON_VER": "3.10",
+                 "PYTHON_VER": "3.10",
                  "METHOD": "transformers"}, 
         "context": "."
     },
@@ -28,7 +28,8 @@
         }
     },
     "remoteEnv": {
-        "OPENAI_KEY": "${localEnv:OPENAI_KEY}"
+        "OPENAI_KEY": "${localEnv:OPENAI_KEY}",
+        "HUGGING_FACE_TOKEN": "${localEnv:HUGGING_FACE_TOKEN}"
     }
 }
 
