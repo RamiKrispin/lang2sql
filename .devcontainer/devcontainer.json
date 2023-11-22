@@ -2,14 +2,14 @@
     "name": "lang2sql",
     "build": {
         "dockerfile": "Dockerfile.dev",
-        "args": {"ENV_NAME": "lang2sql",
-                 "PYTHON_VER": "3.10",
-                 "METHOD": "transformers"}, 
+        "args": {
+            "ENV_NAME": "lang2sql",
+            "PYTHON_VER": "3.10",
+            "METHOD": "openai",
+            "QUARTO_VER": "1.3.450"
+        },
         "context": "."
     },
-
-
-    
     "customizations": {
         "settings": {
             "python.defaultInterpreterPath": "/opt/conda/envs/lang2sql/bin/python",
@@ -32,7 +32,6 @@
         "HUGGING_FACE_TOKEN": "${localEnv:HUGGING_FACE_TOKEN}"
     }
 }
-
 // Reference
 // https://containers.dev/guide/dockerfile
 // https://code.visualstudio.com/docs/devcontainers/containers
