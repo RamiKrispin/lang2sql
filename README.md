@@ -206,7 +206,7 @@ https://openai.com/product
 
 Once you set the access to the API and a key, I recommend adding the key as an environment variable to your `.zshrc` file (or any other format you are using to store environment variables on your shell system). I stored my API key under the `OPENAI_KEY` environment variable.  For convincing reasons, I recommend you use the same naming convention.
 
-Here is how you can add the variable to your `.zshrc` file:
+To set the variable on the `.zshrc` file (or equivalent), add the below line to the file:
 
 ```shell
 export OPENAI_KEY="YOUR_API_KEY"
