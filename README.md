@@ -6,9 +6,8 @@ This repo provides a step-by-step guide and a template for setting up a natural 
 
 ## Table of Contents:
 - [Motivation](https://github.com/RamiKrispin/lang2sql#motivation)
-- [Scope](https://github.com/RamiKrispin/lang2sql#scope)
+- [Scope and General Architecture](https://github.com/RamiKrispin/lang2sql#scope)
 - [Prerequisites](https://github.com/RamiKrispin/lang2sql#prerequisites)
-- [General Architecture](https://github.com/RamiKrispin/lang2sql#general-architecture)
 - [Data](https://github.com/RamiKrispin/lang2sql#data)
 - [Setting up SQL generator](https://github.com/RamiKrispin/lang2sql#setting-up-sql-generator)
 - [Summary](https://github.com/RamiKrispin/lang2sql#summary)
@@ -31,24 +30,42 @@ One possible application is a chatbot that can respond to user queries with rele
 - Returns the user a CSV file containing the relevant data
 
 <figure>
-<img src="images/general_arch.png" width="100%" align="center"/></a>
+<img src="images/general_arch1.png" width="100%" align="center"/></a>
 <figcaption> Figure 1 - Language to SQL code generator use case</figcaption>
 </figure>
 
 
 In this tutorial, we will build a step-by-step Python application that converts user questions into SQL queries.
 
-## Scope
+## Scope and General Architecture
 
-WIP
+This tutorial provides a step-by-step guide on how to set up a Python application that converts general questions into SQL queries using the OpenAI API. That includes the following functionality:
+- Generalized - the application is not limited to a specific table and can be used on any table
+- For simplicity, the application is limited to a single table (e.g., no joins)
+- Dockerized - develop the application inside a dockerized environment for a simple deployment
+
+Figure 2 below describes the general architecture of a simple language to SQL code generator. 
+
+<figure>
+<img src="images/general_arch2.png" width="100%" align="center"/></a>
+<figcaption> Figure 2 - Language to SQL code generator general architecture</figcaption>
+</figure>
+
+
+The scope and focus of this tutorial is on the green box - building the following functionality:
+- **Question to Prompt** - transform the question into a prompt format:    
+    - Pull the table information to create the prompt context
+    - Add the question to the prompt
+
+- **API Handler** - a function that works with the OpenAI API:
+    - Send a GET request with the prompt
+    - Parse the answer into an SQL query
+- **DB Handler** - a function that sends the SQL query to the database and returns the required data
 
 ## Prerequisites
 
 WIP
 
-## General Architecture
-
-WIP
 
 ## Data
 
