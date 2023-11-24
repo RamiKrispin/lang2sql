@@ -6,7 +6,7 @@ This repo provides a step-by-step guide and a template for setting up a natural 
 
 ## Table of Contents:
 - [Motivation](https://github.com/RamiKrispin/lang2sql#motivation)
-- [Scope and General Architecture](https://github.com/RamiKrispin/lang2sql#scope)
+- [Scope and General Architecture](https://github.com/RamiKrispin/lang2sql#scope-and-general-architecture)
 - [Prerequisites](https://github.com/RamiKrispin/lang2sql#prerequisites)
 - [Data](https://github.com/RamiKrispin/lang2sql#data)
 - [Setting up SQL generator](https://github.com/RamiKrispin/lang2sql#setting-up-sql-generator)
