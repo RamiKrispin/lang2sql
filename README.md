@@ -9,7 +9,7 @@ This repo provides a step-by-step guide and a template for setting up a natural 
 - [Scope and General Architecture](https://github.com/RamiKrispin/lang2sql#scope-and-general-architecture)
 - [Prerequisites](https://github.com/RamiKrispin/lang2sql#prerequisites)
 - [Data](https://github.com/RamiKrispin/lang2sql#data)
-- [Setting up SQL generator](https://github.com/RamiKrispin/lang2sql#setting-up-sql-generator)
+- [Setting up a SQL generator](https://github.com/RamiKrispin/lang2sql#setting-up-a-sql-generator)
 - [Summary](https://github.com/RamiKrispin/lang2sql#summary)
 - [Resources](https://github.com/RamiKrispin/lang2sql#resources)
 - [License](https://github.com/RamiKrispin/lang2sql#license)
@@ -263,7 +263,7 @@ I used the following naming convention - chicago_crime_YEAR.csv and saved the fi
 <br>
 <br />
 
-## Setting up SQL generator
+## Setting up a SQL generator
 
 WIP
 
