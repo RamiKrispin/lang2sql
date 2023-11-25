@@ -34,6 +34,8 @@ One possible application is a chatbot that can respond to user queries with rele
 <figcaption> Figure 1 - Language to SQL code generator use case</figcaption>
 </figure>
 
+<br>
+<br />
 
 In this tutorial, we will build a step-by-step Python application that converts user questions into SQL queries.
 
@@ -51,6 +53,8 @@ Figure 2 below describes the general architecture of a simple language to SQL co
 <figcaption> Figure 2 - Language to SQL code generator general architecture</figcaption>
 </figure>
 
+<br>
+<br />
 
 The scope and focus of this tutorial is on the green box - building the following functionality:
 - **Question to Prompt** - transform the question into a prompt format:    
