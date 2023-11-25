@@ -223,8 +223,10 @@ In order to simulate database functionality, we will be utilizing the [Chicago C
 <figure>
 <img src="images/chicago_crime.png" width="100%" align="center"/></a>
 <figcaption> Figure 3 - The Chicago Crime dataset</figcaption>
-<br>
 </figure>
+
+<br>
+<br />
 
 
 You can pull the data from the API or download a CSV file. To avoid calling the API each time I run the script, I download the files and store them under the data folder. Below are the links to the datasets by year:
@@ -238,8 +240,10 @@ To download the data, use the `Export` button on the top right side, select the 
 <figure>
 <img src="images/chicago_crime_download.png" width="100%" align="center"/></a>
 <figcaption> Figure 4 - Download a full year of data as the CSV file using the Export option</figcaption>
-<br>
 </figure>
+
+<br>
+<br />
 
 I used the following naming convention - chicago_crime_YEAR.csv and saved the files in the `data` folder. Each file size is close to 50 Mb. Therefore, I added them to the git ignore file under the `data` folder, and they are not available on this repo. After downloading the files and setting their names, you should have the following files in the folder:
 ```shell
@@ -251,6 +255,9 @@ I used the following naming convention - chicago_crime_YEAR.csv and saved the fi
 ```
 
 **Note:** As of the time of creating this tutorial, the data for 2023 is still getting updated. Therefore, you may receive slightly different results when running some of the queries in the following section.
+
+<br>
+<br />
 
 ## Setting up SQL generator
 
