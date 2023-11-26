@@ -263,9 +263,197 @@ I used the following naming convention - chicago_crime_YEAR.csv and saved the fi
 <br>
 <br />
 
-## Setting up a SQL generator
+## Setting up a SQL Generator
 
-WIP
+Let's move on to the exciting part, which is setting up a SQL code generator. In this section, we'll create a Python function that takes in a user's question, the associated SQL table, and the OpenAI API key and outputs the SQL query that answers the user's question.
+
+Let's start by loading the Chicago Crime dataset and the required packages.
+
+### Load Dependencies and Data
+
+First thing first - let's load the required packages:
+```python
+import pandas as pd
+import duckdb
+import openai
+import time 
+import os
+```
+
+We will utilize the **os** and **time** packages to load CSV files and reformat certain fields. The data will be processed using the **pandas** package, and we will simulate SQL commands with the **DuckDB** package. Lastly, we will establish a connection to the OpenAI API using the **openai** package.
+
+
+Next, we will load the `CSV` files from the data folder. The code below reads all the `CSV` files available in the data folder: 
+
+```python
+path = "./data"
+
+files = [x for x in os.listdir(path = path) if ".csv" in x]
+```
+If you downloaded the corresponding files for the years 2021 to 2023 and used the same naming convention, you should expect the following output:
+
+``` python
+print(files)
+
+['chicago_crime_2022.csv', 'chicago_crime_2023.csv', 'chicago_crime_2021.csv']
+```
+
+Next, we will read and load all the files and append them into a pandas data frame:
+
+```python 
+chicago_crime = pd.concat((pd.read_csv(path +"/" + f) for f in files), ignore_index=True)
+
+chicago_crime.head
+
+```
+
+If you loaded the files correctly, you should expect the following output:
+
+```python 
+<bound method NDFrame.head of               ID Case Number                    Date                   Block   
+0       12589893    JF109865  01/11/2022 03:00:00 PM    087XX S KINGSTON AVE  \
+1       12592454    JF113025  01/14/2022 03:55:00 PM       067XX S MORGAN ST   
+2       12601676    JF124024  01/13/2022 04:00:00 PM    031XX W AUGUSTA BLVD   
+3       12785595    JF346553  08/05/2022 09:00:00 PM  072XX S UNIVERSITY AVE   
+4       12808281    JF373517  08/14/2022 02:00:00 PM     055XX W ARDMORE AVE   
+...          ...         ...                     ...                     ...   
+648826     26461    JE455267  11/24/2021 12:51:00 AM     107XX S LANGLEY AVE   
+648827     26041    JE281927  06/28/2021 01:12:00 AM       117XX S LAFLIN ST   
+648828     26238    JE353715  08/29/2021 03:07:00 AM    010XX N LAWNDALE AVE   
+648829     26479    JE465230  12/03/2021 08:37:00 PM         000XX W 78TH PL   
+648830  11138622    JA495186  05/21/2021 12:01:00 AM      019XX N PULASKI RD   
+
+        IUCR                Primary Type   
+0       1565                 SEX OFFENSE  \
+1       2826               OTHER OFFENSE   
+2       1752  OFFENSE INVOLVING CHILDREN   
+3       1544                 SEX OFFENSE   
+4       1562                 SEX OFFENSE   
+...      ...                         ...   
+648826  0110                    HOMICIDE   
+648827  0110                    HOMICIDE   
+648828  0110                    HOMICIDE   
+648829  0110                    HOMICIDE   
+648830  1752  OFFENSE INVOLVING CHILDREN   
+...
+648828  41.899709 -87.718893  (41.899709327, -87.718893208)  
+648829  41.751832 -87.626374  (41.751831742, -87.626373808)  
+648830  41.915798 -87.726524  (41.915798196, -87.726524412) 
+
+```
+
+**Note:** When creating this tutorial, partial data for 2023 was available. Appending the three files would result in more rows than shown (648830 rows).
+
+
+### Prompt Enineering 101
+
+Before we get into the Python code, let's pause and review how prompt engineering works and how we can help ChatGPT (and generally any LLM) generate the best results. We will use in this section the [ChatGPT web interface](https://chat.openai.com/).
+
+One major factor in statistical and machine learning models is that the output quality depends on the input quality. As the famous phrase says - *junk-in, junk-out*. Similarly, the quality of the LLM output depends on the quality of the prompt. 
+
+For example, let's assume we want to count the number of cases that ended up with an arrest.
+
+If we use the following prompt:
+```
+Create an SQL query that counts the number of records that ended up with an arrest.
+```
+Here is the output from ChatGPT:
+
+<figure>
+<img src="images/prompt_ex1.png" width="100%" align="center"/></a>
+<figcaption> Figure 5 - Basic prompt without context</figcaption>
+</figure>
+
+<br>
+<br />
+
+It's worth noting that ChatGPT provides a generic response. Although it's generally correct, it may not be practical to use in an automated process. Firstly, the field names in the response don't match the ones in the actual table we need to query. Secondly, the field that represents the arrest outcome is a boolean (`true` or `false`) instead of an integer (`0` or `1`).
+
+ChatGPT, in that sense, acts like a human. It's unlikely that you will receive a more accurate answer from a human by posting the same question on a coding form like Stack Overflow or any other similar platform. Given that we did not provide any context or additional information about the table characteristics, expecting ChatGPT to guess the field names and their values would be unreasonable. The context is a crucial factor in any prompt. To illustrate this point, let's see how ChatGPT handles the following prompt:
+
+```
+I have a table named chicago_crime with the crime records in Chicago City since 2021. The Arrest field defines if the case ended up with arrest or not, and it is a boolean (true or false).  
+
+I want to create an SQL query that counts the number of records that ended up with an arrest.
+```
+
+Here is the output from ChatGPT:
+
+<figure>
+<img src="images/prompt_ex2.png" width="100%" align="center"/></a>
+<figcaption> Figure 5 - Basic prompt without context</figcaption>
+</figure>
+
+<br>
+<br />
+
+This time, after adding context, ChatGPT returned a correct query that we can use as is. Generally, when working with a text generator, the prompt should include two components - context and request. In the above prompt, the first paragraph represents the prompt's context:
+
+```
+I have a table named chicago_crime with the crime records in Chicago City since 2021. The Arrest field defines if the case ended up with arrest or not, and it is a boolean (true or false). 
+```
+Where the second paragraph, represents the request:
+```
+I want to create an SQL query that counts the number of records that ended up with an arrest.
+```
+
+The OpenAI API refers to the context as a `system` and request as a `user`.
+
+The OpenAI API documentation provides a [recommendation](https://platform.openai.com/examples/default-sql-translate) for how to set the `system` and `user` components in a prompt when requesting to generate an SQL code:
+
+
+
+`System`
+```
+Given the following SQL tables, your job is to write queries given a user’s request.
+
+CREATE TABLE Orders (
+  OrderID int,
+  CustomerID int,
+  OrderDate datetime,
+  OrderTime varchar(8),
+  PRIMARY KEY (OrderID)
+);
+
+CREATE TABLE OrderDetails (
+  OrderDetailID int,
+  OrderID int,
+  ProductID int,
+  Quantity int,
+  PRIMARY KEY (OrderDetailID)
+);
+
+CREATE TABLE Products (
+  ProductID int,
+  ProductName varchar(50),
+  Category varchar(50),
+  UnitPrice decimal(10, 2),
+  Stock int,
+  PRIMARY KEY (ProductID)
+);
+
+CREATE TABLE Customers (
+  CustomerID int,
+  FirstName varchar(50),
+  LastName varchar(50),
+  Email varchar(100),
+  Phone varchar(20),
+  PRIMARY KEY (CustomerID)
+);
+```
+
+`User`
+```
+Write a SQL query which computes the average total order value for all orders on 2023-04-01.
+```
+
+In the next section, we will use the above OpenAI example and generalize it into a general-purpose template.
+
+### Setting Prompt Template
+
+### 
+
+
 
 ## Summary
 
