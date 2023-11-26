@@ -451,7 +451,198 @@ In the next section, we will use the above OpenAI example and generalize it into
 
 ### Setting Prompt Template
 
-### 
+In the previous section, we discussed the importance of prompt engineering and how providing a good context can improve the LLM response accuracy. In addition, we saw the OpenAI recommended prompt structure for SQL code generation. In this section, we will focus on generalizing the process of creating prompts for SQL generation based on those principles. The goal is to build a Python function that receives a table name and a user question and creates the prompt accordingly. For example, for the table `chicago_crime` table we loaded before and the question we asked in the previous section, the function should create the below prompt: 
+
+```
+Given the following SQL table, your job is to write queries given a user’s request. 
+
+
+CREATE TABLE chicago_crime (ID BIGINT, Case Number VARCHAR, Date VARCHAR, Block VARCHAR, IUCR VARCHAR, Primary Type VARCHAR, Description VARCHAR, Location Description VARCHAR, Arrest BOOLEAN, Domestic BOOLEAN, Beat BIGINT, District BIGINT, Ward DOUBLE, Community Area BIGINT, FBI Code VARCHAR, X Coordinate DOUBLE, Y Coordinate DOUBLE, Year BIGINT, Updated On VARCHAR, Latitude DOUBLE, Longitude DOUBLE, Location VARCHAR) 
+
+
+Write a SQL query that returns - How many cases ended up with arrest?
+```
+
+Let's start with the prompt structure. We will adopt the OpenAI format and use the following template:
+
+```python
+system_template = """
+
+    Given the following SQL table, your job is to write queries given a user’s request. \n
+
+    CREATE TABLE {} ({}) \n
+    """
+
+user_template = "Write a SQL query that returns - {}"
+```
+
+Where the `system_template` received two elements:
+- The table name
+- The table fields and their attributes
+
+For this tutorial, we will use the DuckDB package to handle the pandas data frame as it was an SQL table and extract the table's field names and attributes using the `duckdb.sql` function. For example, let's use the `DESCRIBE` SQL command to extract the `chicago_crime` table fields information:
+
+```python
+duckdb.sql("DESCRIBE SELECT * FROM chicago_crime;")
+```
+
+Which should return the below table:
+
+```python
+┌──────────────────────┬─────────────┬─────────┬─────────┬─────────┬─────────┐
+│     column_name      │ column_type │  null   │   key   │ default │  extra  │
+│       varchar        │   varchar   │ varchar │ varchar │ varchar │ varchar │
+├──────────────────────┼─────────────┼─────────┼─────────┼─────────┼─────────┤
+│ ID                   │ BIGINT      │ YES     │ NULL    │ NULL    │ NULL    │
+│ Case Number          │ VARCHAR     │ YES     │ NULL    │ NULL    │ NULL    │
+│ Date                 │ VARCHAR     │ YES     │ NULL    │ NULL    │ NULL    │
+│ Block                │ VARCHAR     │ YES     │ NULL    │ NULL    │ NULL    │
+│ IUCR                 │ VARCHAR     │ YES     │ NULL    │ NULL    │ NULL    │
+│ Primary Type         │ VARCHAR     │ YES     │ NULL    │ NULL    │ NULL    │
+│ Description          │ VARCHAR     │ YES     │ NULL    │ NULL    │ NULL    │
+│ Location Description │ VARCHAR     │ YES     │ NULL    │ NULL    │ NULL    │
+│ Arrest               │ BOOLEAN     │ YES     │ NULL    │ NULL    │ NULL    │
+│ Domestic             │ BOOLEAN     │ YES     │ NULL    │ NULL    │ NULL    │
+│ Beat                 │ BIGINT      │ YES     │ NULL    │ NULL    │ NULL    │
+│ District             │ BIGINT      │ YES     │ NULL    │ NULL    │ NULL    │
+│ Ward                 │ DOUBLE      │ YES     │ NULL    │ NULL    │ NULL    │
+│ Community Area       │ BIGINT      │ YES     │ NULL    │ NULL    │ NULL    │
+│ FBI Code             │ VARCHAR     │ YES     │ NULL    │ NULL    │ NULL    │
+│ X Coordinate         │ DOUBLE      │ YES     │ NULL    │ NULL    │ NULL    │
+│ Y Coordinate         │ DOUBLE      │ YES     │ NULL    │ NULL    │ NULL    │
+│ Year                 │ BIGINT      │ YES     │ NULL    │ NULL    │ NULL    │
+│ Updated On           │ VARCHAR     │ YES     │ NULL    │ NULL    │ NULL    │
+│ Latitude             │ DOUBLE      │ YES     │ NULL    │ NULL    │ NULL    │
+│ Longitude            │ DOUBLE      │ YES     │ NULL    │ NULL    │ NULL    │
+│ Location             │ VARCHAR     │ YES     │ NULL    │ NULL    │ NULL    │
+├──────────────────────┴─────────────┴─────────┴─────────┴─────────┴─────────┤
+│ 22 rows                                                          6 columns │
+└────────────────────────────────────────────────────────────────────────────┘
+
+```
+**Note:** The information we need - the column name and its attribute are available on the first two columns. Therefore, we will need to parse those columns and combine them together to the following format:
+```
+Column_Name Column_Attribute
+```
+For example, the `Case Number` column should transfer into the following format:
+
+```
+Case Number VARCHAR
+```
+
+The `create_message` function below orchestrates the process of taking the table name and the question and generating the prompt using the above logic:
+
+```python
+def create_message(table_name, query):
+
+    class message:
+        def __init__(message, system, user, column_names, column_attr):
+            message.system = system
+            message.user = user
+            message.column_names = column_names
+            message.column_attr = column_attr
+
+    
+    system_template = """
+
+    Given the following SQL table, your job is to write queries given a user’s request. \n
+
+    CREATE TABLE {} ({}) \n
+    """
+
+    user_template = "Write a SQL query that returns - {}"
+    
+    tbl_describe = duckdb.sql("DESCRIBE SELECT * FROM " + table_name +  ";")
+    col_attr = tbl_describe.df()[["column_name", "column_type"]]
+    col_attr["column_joint"] = col_attr["column_name"] + " " +  col_attr["column_type"]
+    col_names = str(list(col_attr["column_joint"].values)).replace('[', '').replace(']', '').replace('\'', '')
+
+    system = system_template.format(table_name, col_names)
+    user = user_template.format(query)
+
+    m = message(system = system, user = user, column_names = col_attr["column_name"], column_attr = col_attr["column_type"])
+    return m
+
+```
+
+The function creates the prompt template and returns the prompt `system` and `user` components and the columns names and attributes. For example, let's run the number of arrest question: 
+
+```python
+query = "How many cases ended up with arrest?"
+msg = create_message(table_name = "chicago_crime", query = query)
+```
+
+This will reutns:
+```python
+print(msg.system)
+
+Given the following SQL table, your job is to write queries given a user’s request. 
+
+
+CREATE TABLE chicago_crime (ID BIGINT, Case Number VARCHAR, Date VARCHAR, Block VARCHAR, IUCR VARCHAR, Primary Type VARCHAR, Description VARCHAR, Location Description VARCHAR, Arrest BOOLEAN, Domestic BOOLEAN, Beat BIGINT, District BIGINT, Ward DOUBLE, Community Area BIGINT, FBI Code VARCHAR, X Coordinate DOUBLE, Y Coordinate DOUBLE, Year BIGINT, Updated On VARCHAR, Latitude DOUBLE, Longitude DOUBLE, Location VARCHAR) 
+
+print(msg.user)
+
+Write a SQL query that returns - How many cases ended up with arrest?
+
+print(msg.column_names)
+
+0                       ID
+1              Case Number
+2                     Date
+3                    Block
+4                     IUCR
+5             Primary Type
+6              Description
+7     Location Description
+8                   Arrest
+9                 Domestic
+10                    Beat
+11                District
+12                    Ward
+13          Community Area
+14                FBI Code
+15            X Coordinate
+16            Y Coordinate
+17                    Year
+18              Updated On
+19                Latitude
+20               Longitude
+21                Location
+Name: column_name, dtype: object
+
+print(msg.column_attr)
+
+0      BIGINT
+1     VARCHAR
+2     VARCHAR
+3     VARCHAR
+4     VARCHAR
+5     VARCHAR
+6     VARCHAR
+7     VARCHAR
+8     BOOLEAN
+9     BOOLEAN
+10     BIGINT
+11     BIGINT
+12     DOUBLE
+13     BIGINT
+14    VARCHAR
+15     DOUBLE
+16     DOUBLE
+17     BIGINT
+18    VARCHAR
+19     DOUBLE
+20     DOUBLE
+21    VARCHAR
+Name: column_type, dtype: object
+```
+
+The output of the `create_message` function was designed to fit the OpenAI API `ChatCompletion.create `function arguments, which we will review in the next section.
+
+
+
+### Working with the OpenAI API
 
 
 
