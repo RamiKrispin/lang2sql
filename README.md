@@ -77,7 +77,7 @@ In addition, basic knowledge of SQL and access to the OpenAI API are required.
 
 ### Nice to Have
 
-While not necessary, having a basic knowledge of Docker is helpful, as the tutorial was created in a Dockerized environment using VScode's Dev Containers extension. If you don't have experience with Docker or the extension, you can still run the tutorial by creating a virtual environment and installing the required packages (as described below). Knowledge of Prompt engineering and the OpenAI API is also beneficial.
+While not necessary, having a basic knowledge of Docker is helpful, as the tutorial was created in a Dockerized environment using VScode's Dev Containers extension. If you don't have experience with Docker or the extension, you can still run the tutorial by creating a virtual environment and installing the required libraries (as described below). Knowledge of Prompt engineering and the OpenAI API is also beneficial.
 
 I created a detailed tutorial about setting a Python dockerized environment with VScode and the Dev Containers extension:
 
@@ -267,11 +267,11 @@ I used the following naming convention - chicago_crime_YEAR.csv and saved the fi
 
 Let's move on to the exciting part, which is setting up a SQL code generator. In this section, we'll create a Python function that takes in a user's question, the associated SQL table, and the OpenAI API key and outputs the SQL query that answers the user's question.
 
-Let's start by loading the Chicago Crime dataset and the required packages.
+Let's start by loading the Chicago Crime dataset and the required Python libraries.
 
 ### Load Dependencies and Data
 
-First thing first - let's load the required packages:
+First thing first - let's load the required Python libraries:
 ```python
 import pandas as pd
 import duckdb
@@ -280,7 +280,7 @@ import time
 import os
 ```
 
-We will utilize the **os** and **time** packages to load CSV files and reformat certain fields. The data will be processed using the **pandas** package, and we will simulate SQL commands with the **DuckDB** package. Lastly, we will establish a connection to the OpenAI API using the **openai** package.
+We will utilize the **os** and **time** libraries to load CSV files and reformat certain fields. The data will be processed using the **pandas** library, and we will simulate SQL commands with the **DuckDB** library. Lastly, we will establish a connection to the OpenAI API using the **openai** library.
 
 
 Next, we will load the `CSV` files from the data folder. The code below reads all the `CSV` files available in the data folder: 
@@ -480,7 +480,7 @@ Where the `system_template` received two elements:
 - The table name
 - The table fields and their attributes
 
-For this tutorial, we will use the DuckDB package to handle the pandas data frame as it was an SQL table and extract the table's field names and attributes using the `duckdb.sql` function. For example, let's use the `DESCRIBE` SQL command to extract the `chicago_crime` table fields information:
+For this tutorial, we will use the DuckDB library to handle the pandas data frame as it was an SQL table and extract the table's field names and attributes using the `duckdb.sql` function. For example, let's use the `DESCRIBE` SQL command to extract the `chicago_crime` table fields information:
 
 ```python
 duckdb.sql("DESCRIBE SELECT * FROM chicago_crime;")
@@ -644,6 +644,224 @@ The output of the `create_message` function was designed to fit the OpenAI API `
 
 ### Working with the OpenAI API
 
+This section focuses on the [openai](https://github.com/openai/openai-python) Python library functionality. The openai library enables seamless access to the OpenAI REST API. We will use the library to connect to the API and send GET requests with our prompt. 
+
+Let's start by connecting to the API by feeding our API to the `openai.api_key` function:
+
+```python
+openai.api_key = os.getenv('OPENAI_KEY')
+```
+
+**Note:** We used the `getenv` function from the `os` library to load the OPENAI_KEY environment variable. Alternatively, you can feed directly your API key:
+
+```python
+openai.api_key = "YOUR_OPENAI_API_KEY"
+```
+
+The OpenAI API provides access to a variety of LLMs with different functionalities. You can use the openai.Model.list function to get a list of the available models:
+
+```python
+openai.Model.list()
+```
+
+To transform it into a nice format, you can wrap it in a `pandas` data frame:
+
+``` python
+openai_api_models = pd.DataFrame(openai.Model.list()["data"])
+
+openai_api_models.head
+```
+
+And should expect the following output:
+```
+<bound method NDFrame.head of                                id object     created         owned_by
+0     text-search-babbage-doc-001  model  1651172509       openai-dev
+1                           gpt-4  model  1687882411           openai
+2              curie-search-query  model  1651172509       openai-dev
+3                text-davinci-003  model  1669599635  openai-internal
+4   text-search-babbage-query-001  model  1651172509       openai-dev
+..                            ...    ...         ...              ...
+65    gpt-3.5-turbo-instruct-0914  model  1694122472           system
+66                       dall-e-2  model  1698798177           system
+67                     tts-1-1106  model  1699053241           system
+68                  tts-1-hd-1106  model  1699053533           system
+69              gpt-3.5-turbo-16k  model  1683758102  openai-internal
+
+[70 rows x 4 columns]>
+```
+
+For our use case, text generation, we will use the `gpt-3.5-turbo` model, which is an improvement of the GPT3 model. The `gpt-3.5-turbo` model represents a series of models that keep getting updated, and by default, if the model version is not specified, the API will point out to the most recent stable release. When creating this tutorial, the default 3.5 model was `gpt-3.5-turbo-0613`, using 4,096 tokens, and trained with data up to September 2021.
+
+
+To send a `GET` request with our prompt, we will use the `ChatCompletion.create` function. The function has many arguments, and we will use the following ones:
+- `model` - The model ID to use, a full list available [here](https://platform.openai.com/docs/models)
+- `messages` - A list of messages comprising the conversation so far (e.g. the prompt)
+- `temperature` - Manage the randomness or determinism of the process output by setting the sampling temperature level. The temperature level accepts values between 0 and 2. When the argument value is higher, the output becomes more random. Conversely, when the argument value is closer to 0, the output becomes more deterministic (reproducible)
+- `max_tokens` - The maximum number of tokens to generate in the completion
+
+
+The full list of the function arguments available on the [API documentaiton](https://platform.openai.com/docs/api-reference/chat/create).
+
+
+In the below example, we will use the same prompt as the one used on the ChatGPT web interface (i.e., Figure 5), this time using the API. We will generate the prompt with the `create_message` function:
+
+```python
+query = "How many cases ended up with arrest?"
+prompt = create_message(table_name = "chicago_crime", query = query)
+```
+
+Let's transform the above prompt into the structure of the `ChatCompletion.create` function `messages` argument:
+
+``` python
+  message = [
+    {
+      "role": "system",
+      "content": prompt.system
+    },
+    {
+      "role": "user",
+      "content": prompt.user
+    }
+    ]
+```
+
+
+Next, we will send the prompt (i.e., the `message` object) to the API using the `ChatCompletion.create` function:
+
+
+```python
+ response = openai.ChatCompletion.create(
+        model = "gpt-3.5-turbo",
+        messages = message,
+        temperature = 0,
+        max_tokens = 256)
+```
+
+We will set the `temperature` argument to 0 to ensure high reproducibility and limit the number of tokens in the text completion to 256. The function returns a `JSON` object with the text completion, metadata, and other information:
+
+```python
+print(response)
+
+<OpenAIObject chat.completion id=chatcmpl-8PzomlbLrTOTx1uOZm4WQnGr4JwU7 at 0xffff4b0dcb80> JSON: {
+  "id": "chatcmpl-8PzomlbLrTOTx1uOZm4WQnGr4JwU7",
+  "object": "chat.completion",
+  "created": 1701206520,
+  "model": "gpt-3.5-turbo-0613",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "SELECT COUNT(*) FROM chicago_crime WHERE Arrest = true;"
+      },
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 137,
+    "completion_tokens": 12,
+    "total_tokens": 149
+  }
+}
+
+```
+Using the response indies, we can extract the SQL query:
+
+```python
+sql = response["choices"][0]["message"]["content"]
+
+print(sql)
+
+'SELECT COUNT(*) FROM chicago_crime WHERE Arrest = true;'
+```
+
+Using the `duckdb.sql` function to run the SQL code:
+
+``` python
+duckdb.sql(sql).show()
+
+┌──────────────┐
+│ count_star() │
+│    int64     │
+├──────────────┤
+│        77635 │
+└──────────────┘
+```
+
+
+In the next section, we will generalize and functionalize all the steps.
+
+### Stitching it All Together
+
+In the previous sections, we introduced the prompt format, set the `create_message` function, and reviewed the functionality of the `ChatCompletion.create` function. In this section we stitch it all together. 
+
+One thing to note about the returned SQL code from the `ChatCompletion.create` function is that the variable does not return with quotes. That might be an issue when the variable name in the query combines two or more words. For example, using a variable such as `Case Number` or `Primary Type` from the `chicago_crime` inside a query without using quotes will result in an error.
+
+We will use the below helper function to add quotes to the variables in the query:
+
+```python
+def add_quotes(query, col_names):
+    for i in col_names:
+        if i in query:
+            query = str(query).replace(i, '"' + i + '"') 
+    return(query)
+```
+
+The function inputs are the query and the corresponding table's column names. It loops over the column names and adds quotes if it finds a match within the query. For example, we can run it with the SQL query we parsed from the `ChatCompletion.create` function output:
+
+```python
+add_quotes(query = sql, col_names = prompt.column_names)
+
+'SELECT COUNT(*) FROM chicago_crime WHERE "Arrest" = true;'
+```
+You can notice that it added quotes to the `Arrest` variable.
+
+
+
+```python
+def lang2sql(api_key, table_name, query, model = "gpt-3.5-turbo", temperature = 0, max_tokens = 256, frequency_penalty = 0,presence_penalty= 0):
+    class response:
+        def __init__(output, message, response, sql):
+            output.message = message
+            output.response = response
+            output.sql = sql
+
+    openai.api_key = api_key
+
+    m = create_message(table_name = table_name, query = query)
+
+    message = [
+    {
+      "role": "system",
+      "content": m.system
+    },
+    {
+      "role": "user",
+      "content": m.user
+    }
+    ]
+    
+    openai_response = openai.ChatCompletion.create(
+        model = model,
+        messages = message,
+        temperature = temperature,
+        max_tokens = max_tokens,
+        frequency_penalty = frequency_penalty,
+        presence_penalty = presence_penalty)
+    
+    sql_query = add_quotes(query = openai_response["choices"][0]["message"]["content"], col_names = m.column_names)
+
+    output = response(message = m, response = openai_response, sql = sql_query)
+
+    return output
+
+```
+
+
+
+
+
+
 
 
 ## Summary
@@ -655,7 +873,9 @@ WIP
 - Chicago Crime data set - https://data.cityofchicago.org/Public-Safety/Crimes-2020/qzdf-xmn8
 - OpenAI API documentation - https://platform.openai.com/docs/introduction
 - OpenAI API registration - https://openai.com/product
-
+- OpenAI API list of models - https://platform.openai.com/docs/models
+- oepnai Python library - https://pypi.org/project/openai/
+- 
 ## License
 
 This tutorial is licensed under a [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International](https://creativecommons.org/licenses/by-nc-sa/4.0/) License.
