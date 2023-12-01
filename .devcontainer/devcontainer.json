@@ -1,7 +1,7 @@
 {
     "name": "lang2sql",
     "build": {
-        "dockerfile": "Dockerfile.dev",
+        "dockerfile": "Dockerfile",
         "args": {
             "ENV_NAME": "lang2sql",
             "PYTHON_VER": "3.10",
@@ -28,8 +28,8 @@
         }
     },
     "remoteEnv": {
-        "OPENAI_KEY": "${localEnv:OPENAI_KEY}",
-        "HUGGING_FACE_TOKEN": "${localEnv:HUGGING_FACE_TOKEN}"
+        "OPENAI_KEY": "${localEnv:OPENAI_KEY}"
+        // "HUGGING_FACE_TOKEN": "${localEnv:HUGGING_FACE_TOKEN}"
     }
 }
 // Reference

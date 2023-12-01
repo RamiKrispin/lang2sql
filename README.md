@@ -89,6 +89,75 @@ To set up a natural language to SQL code generation, we will use the following P
 - `openai` - to work with the OpenAI API
 - `time` and `os` - to load CSV files and format fields 
 
+This repository contains the necessary settings to launch a Dockerized environment with the tutorial requirements in VScode and the Dev Containers extension. More details are available in the next section.
+
+Alternatively, you can set up a virtual environment and install the tutorial requirements by following the instructions below using the instructions in the [Using Virtual Environment]() section.
+
+### Using Docker with VScode
+
+This tutorial was built inside a dockerized environment with VScode and the [Dev Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) extension. To run it with VScode, you will need to install the Dev Containers extension and have Docker Desktop (or equivalent) open. The settings of the environment are available under the `.devcontainer` folder:
+
+```shell
+.── .devcontainer
+    ├── Dockerfile
+    ├── Dockerfile.dev
+    ├── devcontainer.json
+    ├── install_dependencies_core.sh
+    ├── install_dependencies_other.sh
+    ├── install_quarto.sh
+    ├── requirements_core.txt
+    ├── requirements_openai.txt
+    └── requirements_transformers.txt
+
+```
+The `devcontainer.json` has the build instructions and the VScode settings for this dockerized environment:
+
+```json
+{
+    "name": "lang2sql",
+    "build": {
+        "dockerfile": "Dockerfile",
+        "args": {
+            "ENV_NAME": "lang2sql",
+            "PYTHON_VER": "3.10",
+            "METHOD": "openai",
+            "QUARTO_VER": "1.3.450"
+        },
+        "context": "."
+    },
+    "customizations": {
+        "settings": {
+            "python.defaultInterpreterPath": "/opt/conda/envs/lang2sql/bin/python",
+            "python.selectInterpreter": "/opt/conda/envs/lang2sql/bin/python"
+        },
+        "vscode": {
+            "extensions": [
+                "quarto.quarto",
+                "ms-azuretools.vscode-docker",
+                "ms-python.python",
+                "ms-vscode-remote.remote-containers",
+                "yzhang.markdown-all-in-one",
+                "redhat.vscode-yaml",
+                "ms-toolsai.jupyter"
+            ]
+        }
+    },
+    "remoteEnv": {
+        "OPENAI_KEY": "${localEnv:OPENAI_KEY}"
+    }
+}
+
+```
+
+Where the `build` argument defines the `docker build` method and sets the arguments for the build. In this case, we set the Python version to `3.10`, and the conda virtual environment to `ang2sql`. The `METHOD` argument defines the type of environment - either `openai` to install the requirements libraries for this tutorial using the OpenAI API or `transformers` to set the environment for HuggingFaces API (which is out of scope for this tutorial).
+
+
+The `remoteEnv` argument enables setting environment variables. We will use it to set the OpenAI API key. In this case, I set the variable locally as `OPENAI_KEY`, and I am loading it using the `localEnv` argument.
+
+If you want to learn more about setting up a Python development environment with VScode and Docker, check this [tutorial](https://github.com/RamiKrispin/vscode-python).
+
+
+### Using Virtual Environment
 
 If you are not using the tutorial dockerized environment, you can create a local virtual environment from the command line using the script below:
 
@@ -1012,7 +1081,7 @@ Although this tutorial was limited to working with a single table (e.g., no join
 - OpenAI API registration - https://openai.com/product
 - OpenAI API list of models - https://platform.openai.com/docs/models
 - oepnai Python library - https://pypi.org/project/openai/
-- 
+- Tutorial for setting a dockerized Python environment with VScode - https://github.com/RamiKrispin/vscode-python
 ## License
 
 This tutorial is licensed under a [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International](https://creativecommons.org/licenses/by-nc-sa/4.0/) License.
