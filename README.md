@@ -91,7 +91,7 @@ To set up a natural language to SQL code generation, we will use the following P
 
 This repository contains the necessary settings to launch a Dockerized environment with the tutorial requirements in VScode and the Dev Containers extension. More details are available in the next section.
 
-Alternatively, you can set up a virtual environment and install the tutorial requirements by following the instructions below using the instructions in the [Using Virtual Environment]() section.
+Alternatively, you can set up a virtual environment and install the tutorial requirements by following the instructions below using the instructions in the [Using Virtual Environment](https://github.com/RamiKrispin/lang2sql#using-virtual-environment) section.
 
 ### Using Docker with VScode
 
