@@ -1,7 +1,5 @@
 # lang2sql
 
-🚧WIP 🏗️, pre spell checking🛠️
-
 This repo provides a step-by-step guide and a template for setting up a natural language to SQL code generator with the OpneAI API.
 
 ## Table of Contents:
@@ -771,7 +769,9 @@ Using the response indies, we can extract the SQL query:
 sql = response["choices"][0]["message"]["content"]
 
 print(sql)
+```
 
+```sql
 'SELECT COUNT(*) FROM chicago_crime WHERE Arrest = true;'
 ```
 
@@ -797,13 +797,16 @@ In the previous sections, we introduced the prompt format, set the `create_messa
 
 One thing to note about the returned SQL code from the `ChatCompletion.create` function is that the variable does not return with quotes. That might be an issue when the variable name in the query combines two or more words. For example, using a variable such as `Case Number` or `Primary Type` from the `chicago_crime` inside a query without using quotes will result in an error.
 
-We will use the below helper function to add quotes to the variables in the query:
+We will use the below helper function to add quotes to the variables in the query if the returned query does not have one:
 
 ```python
 def add_quotes(query, col_names):
     for i in col_names:
         if i in query:
-            query = str(query).replace(i, '"' + i + '"') 
+            l = query.find(i)
+            if query[l-1] != "'" and query[l-1] != '"': 
+                query = str(query).replace(i, '"' + i + '"') 
+
     return(query)
 ```
 
@@ -816,7 +819,7 @@ add_quotes(query = sql, col_names = prompt.column_names)
 ```
 You can notice that it added quotes to the `Arrest` variable.
 
-
+We can now introduce the `lang2sql` function that leverages the three functions we introduced so far - `create_message`, `ChatCompletion.create`, and `add_quotes` to translate a user question to a SQL code:
 
 ```python
 def lang2sql(api_key, table_name, query, model = "gpt-3.5-turbo", temperature = 0, max_tokens = 256, frequency_penalty = 0,presence_penalty= 0):
@@ -857,16 +860,150 @@ def lang2sql(api_key, table_name, query, model = "gpt-3.5-turbo", temperature = 
 
 ```
 
+The function receives, as inputs, the OpenAI API key, table name, and the core parameters of the `ChatCompletion.create` function and returns an object with the prompt, the API response, and the parsed query. For example, let's try to re-run the same query we used in the previous section with the `lang2sql` function:
 
 
+``` python
+query = "How many cases ended up with arrest?"
+response = lang2sql(api_key = api_key, table_name = "chicago_crime", query = query)
 
+```
+We can extract the SQL query from the output object:
 
+```python
+print(response.sql)
+```
+```sql
+SELECT COUNT(*) FROM chicago_crime WHERE "Arrest" = true;
+```
 
+We can test the output with respect to the results we received in the previous section:
+
+``` python
+duckdb.sql(response.sql).show()
+
+┌──────────────┐
+│ count_star() │
+│    int64     │
+├──────────────┤
+│        77635 │
+└──────────────┘
+```
+
+Let's now add additional complexity to the question and ask for cases that ended up with an arrest during 2022:
+
+``` python
+query = "How many cases ended up with arrest during 2022"
+response = lang2sql(api_key = api_key, table_name = "chicago_crime", query = query)
+```
+
+As you can see, the model correctly identified the relevant field as `Year` and generated the correct query:
+
+```python
+print(response.sql)
+```
+
+The SQL code:
+
+```sql
+SELECT COUNT(*) FROM chicago_crime WHERE "Arrest" = TRUE AND "Year" = 2022;
+```
+
+Testing the query on table:
+
+```python
+duckdb.sql(response.sql).show()
+
+┌──────────────┐
+│ count_star() │
+│    int64     │
+├──────────────┤
+│        27805 │
+└──────────────┘
+```
+
+Here is an example of a simple question that required a grouping by a specific variable:
+
+```python
+query = "Summarize the cases by primary type"
+response = lang2sql(api_key = api_key, table_name = "chicago_crime", query = query)
+
+print(response.sql)
+```
+You can see from the response output that the SQL code in this case is correct:
+
+```sql
+SELECT "Primary Type", COUNT(*) as TotalCases
+FROM chicago_crime
+GROUP BY "Primary Type"
+```
+
+This is the output of the query:
+
+```python 
+duckdb.sql(response.sql).show()
+
+┌───────────────────────────────────┬────────────┐
+│           Primary Type            │ TotalCases │
+│              varchar              │   int64    │
+├───────────────────────────────────┼────────────┤
+│ MOTOR VEHICLE THEFT               │      54934 │
+│ ROBBERY                           │      25082 │
+│ WEAPONS VIOLATION                 │      24672 │
+│ INTERFERENCE WITH PUBLIC OFFICER  │       1161 │
+│ OBSCENITY                         │        127 │
+│ STALKING                          │       1206 │
+│ BATTERY                           │     115760 │
+│ OFFENSE INVOLVING CHILDREN        │       5177 │
+│ CRIMINAL TRESPASS                 │      11255 │
+│ PUBLIC PEACE VIOLATION            │       1980 │
+│    ·                              │         ·  │
+│    ·                              │         ·  │
+│    ·                              │         ·  │
+│ ASSAULT                           │      58685 │
+│ CRIMINAL DAMAGE                   │      75611 │
+│ DECEPTIVE PRACTICE                │      46377 │
+│ NARCOTICS                         │      13931 │
+│ BURGLARY                          │      19898 │
+...
+├───────────────────────────────────┴────────────┤
+│ 31 rows (20 shown)                   2 columns │
+└────────────────────────────────────────────────┘
+
+```
+
+Last but not least, the LLM can identify the context (e.g., which variable) even when we provide a partial variable name:
+```python
+query = "How many cases the type is robbery?"
+response = lang2sql(api_key = api_key, table_name = "chicago_crime", query = query)
+
+print(response.sql)
+```
+It returns the below SQL code:
+```sql
+SELECT COUNT(*) FROM chicago_crime WHERE "Primary Type" = 'ROBBERY';
+```
+
+This is the output of the query:
+
+```python
+duckdb.sql(response.sql).show()
+
+┌──────────────┐
+│ count_star() │
+│    int64     │
+├──────────────┤
+│        25082 │
+└──────────────┘
+```
 
 
 ## Summary
 
-WIP
+In this tutorial, we have demonstrated how to build a SQL code generator with a few lines of Python code and utilize the OpenAI API. We have seen that the quality of the prompt is crucial for the success of the resulting SQL code. In addition to the context provided by the prompt, the field names should also provide information about the field's characteristics to help the LLM identify the relevance of the field to the user question. 
+
+
+Although this tutorial was limited to working with a single table (e.g., no joins between tables), some LLMs, such as the ones available on OpenAI, can handle more complex cases, including working with multiple tables and identifying the correct join operations. Adjusting the lang2sql function to handle multiple tables could be a nice next step.
 
 ## Resources
 
