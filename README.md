@@ -1045,7 +1045,7 @@ duckdb.sql(response.sql).show()
 
 Last but not least, the LLM can identify the context (e.g., which variable) even when we provide a partial variable name:
 ```python
-query = "How many cases the type is robbery?"
+query = "How many cases is the type of robbery?"
 response = lang2sql(api_key = api_key, table_name = "chicago_crime", query = query)
 
 print(response.sql)
