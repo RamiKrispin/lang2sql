@@ -980,7 +980,7 @@ The SQL code:
 SELECT COUNT(*) FROM chicago_crime WHERE "Arrest" = TRUE AND "Year" = 2022;
 ```
 
-Testing the query on table:
+Testing the query in the table:
 
 ```python
 duckdb.sql(response.sql).show()
