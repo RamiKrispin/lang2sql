@@ -641,7 +641,7 @@ query = "How many cases ended up with arrest?"
 msg = create_message(table_name = "chicago_crime", query = query)
 ```
 
-This will reutns:
+This will return:
 ```python
 print(msg.system)
 
