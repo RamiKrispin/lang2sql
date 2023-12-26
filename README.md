@@ -549,13 +549,13 @@ Where the `system_template` received two elements:
 - The table name
 - The table fields and their attributes
 
-For this tutorial, we will use the DuckDB library to handle the pandas data frame as it was an SQL table and extract the table's field names and attributes using the `duckdb.sql` function. For example, let's use the `DESCRIBE` SQL command to extract the `chicago_crime` table fields information:
+For this tutorial, we will use the DuckDB library to handle the pandas' data frame as it was an SQL table and extract the table's field names and attributes using the `duckdb.sql` function. For example, let's use the `DESCRIBE` SQL command to extract the `chicago_crime` table fields information:
 
 ```python
 duckdb.sql("DESCRIBE SELECT * FROM chicago_crime;")
 ```
 
-Which should return the below table:
+Which should return the table below:
 
 ```python
 ┌──────────────────────┬─────────────┬─────────┬─────────┬─────────┬─────────┐
