@@ -2,7 +2,9 @@
 
 This repo provides a step-by-step guide and a template for setting up a natural language to SQL code generator with the OpneAI API.
 
-Last update: Dec 1st, 2023
+The tutorial is also available on [Medium](https://medium.com/p/d267f40d7218).
+
+Last update: Jan 7st, 2024
 
 ## Table of Contents:
 - [Motivation](https://github.com/RamiKrispin/lang2sql#motivation)
