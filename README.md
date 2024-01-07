@@ -1084,7 +1084,7 @@ Although this tutorial was limited to working with a single table (e.g., no join
 - OpenAI API documentation - https://platform.openai.com/docs/introduction
 - OpenAI API registration - https://openai.com/product
 - OpenAI API list of models - https://platform.openai.com/docs/models
-- oepnai Python library - https://pypi.org/project/openai/
+- OpenAI Python library - https://pypi.org/project/openai/
 - Tutorial for setting a dockerized Python environment with VScode - https://github.com/RamiKrispin/vscode-python
 ## License
 
