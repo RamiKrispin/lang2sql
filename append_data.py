@@ -1,7 +1,7 @@
 import pandas as pd
 import os
 
-path = "./data_raw"
+path = "./data"
 
 files = os.listdir(path = path)
 
