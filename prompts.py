@@ -1,6 +1,7 @@
 import duckdb
 import pandas as pd
 import openai
+import ollama
 
 class SqlPrompt:
     
@@ -97,11 +98,29 @@ class SqlPrompt:
                             frequency_penalty = 0,
                             presence_penalty= 0)
         # self.get_data()
+    def ask_ollama(self,
+                   question,
+                   model):
+        self.set_prompt(question)
+        response = ollama.chat(model=model, messages = self.message)
+        self.ollama_response = ollama.chat(model=model, messages = self.message)
+        self.markdown =  add_quotes(query = self.ollama_response['message']['content'], 
+                                            col_names = self.column_names)
+        self.markdown = remove_text(query = self.markdown)
+        self.query = remove_code_chunk(query=self.markdown)
         
         
             
                 
 
+def remove_text(query):
+    if "```sql\n" in query and "```\n" in query:
+        s = query.find("```sql\n")
+        e = query.find( "```\n") + 4
+        query = query[s:e]
+        return query
+    else: 
+        return query
 
 
 
